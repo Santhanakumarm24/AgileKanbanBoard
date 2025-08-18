@@ -9,7 +9,7 @@ import './Styles/livedataview.css'
 
 import { calculateSprintDates, calculateSprintEndDate, calculateStartDateFor14DayPeriod } from '../utils/dataCalculator';
 
-export const exportToExcel = (jsonData,targetDate, fileName = 'data', sheetName = 'Sheiet1') => {
+export const exportToExcel = (jsonData, startDate, targetDate, fileName = 'data', sheetName = 'sheet1') => {
     if (!jsonData || jsonData.length === 0) {
         console.warn("No data provided for Excel export.");
         return;
@@ -30,7 +30,7 @@ export const exportToExcel = (jsonData,targetDate, fileName = 'data', sheetName 
 
     // 4. Create a Blob from the buffer and save it
     const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-    saveAs(data, `${fileName}_${targetDate}.xlsx`);
+    saveAs(data, `${fileName}_${startDate} to ${targetDate}.xlsx`);
 };
 
 
@@ -39,30 +39,44 @@ export const exportToExcel = (jsonData,targetDate, fileName = 'data', sheetName 
 
 const LiveDataView = () => {
 
-    const initialjql = `Project in (SCPA, PAYSYS, TMSPON) AND Type NOT in ("EPIC")
-AND ((assignee in (e.subbiah, Anushree.Chandrasek, Soujanya.Shetty, sumitha.kumari, Sai.Suluru, praveer.nair, srinithi.ilangovan, vivekprabhakaran.j)) 
-OR ( (issueFunction in commented("by e.subbiah") OR issuekey in updatedBy(e.subbiah) )
-OR ( issueFunction in commented("by Anushree.Chandrasek") OR issuekey in updatedBy( Anushree.Chandrasek) )
-OR ( issueFunction in commented("by Soujanya.Shetty") OR issuekey in updatedBy(Soujanya.Shetty) )
-OR ( issueFunction in commented("by sumitha.kumari") OR issuekey in updatedBy(sumitha.kumari) )
-OR ( issueFunction in commented("by Sai.Suluru") OR issuekey in updatedBy(Sai.Suluru) )
-OR ( issueFunction in commented("by praveer.nair") OR issuekey in updatedBy(praveer.nair) )
-OR ( issueFunction in commented("by srinithi.ilangovan") OR issuekey in updatedBy(srinithi.ilangovan) )
-OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedBy(vivekprabhakaran.j) ) ))
+    const initialjql = `
+Project in (SCPA, PAYSYS, TMSPON) AND Type NOT in ("EPIC")
+AND ((assignee in (saurabh.patil, sravanthi.vettigunta, ayush.arikar, g.chinniraviteja)) 
+OR ( (issueFunction in commented("by saurabh.patil") OR issuekey in updatedBy(saurabh.patil) )
+OR ( issueFunction in commented("by sravanthi.vettigunta") OR issuekey in updatedBy( sravanthi.vettigunta) )
+OR ( issueFunction in commented("by ayush.arikar") OR issuekey in updatedBy(ayush.arikar) )
+OR ( issueFunction in commented("by g.chinniraviteja") OR issuekey in updatedBy(g.chinniraviteja) ) )) 
 `
 
-    const [targetDate, setTargetDate] = useState('');
+    const [targetDate, setTargetDate] = useState('2024-12-31');
+		  useEffect(() => {
+		    const today = new Date();
+		    const yyyy = today.getFullYear();
+		    const mm = String(today.getMonth() + 1).padStart(2, "0");
+		    const dd = String(today.getDate()).padStart(2, "0");
+		    setTargetDate(`${yyyy}-${mm}-${dd}`);
+		  }, []);
+
+	
+	
     const [query, setQuery] = useState(initialjql);
     const [jqlQuery, setJqlQuery] = useState('');
     const [statuses, setStatuses] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [podName, setPodName] = useState('Money Matrix');
-    const startDate = calculateStartDateFor14DayPeriod(targetDate);
+    
+	const startDate = calculateStartDateFor14DayPeriod(targetDate);
+	const sprintPeriod = calculateSprintDates(targetDate)
+	const sprStartDate = sprintPeriod.sprintStart;
+	const sprEndDate = sprintPeriod.sprintEnd;
+
+	console.log("-------->>>>>>> ", sprEndDate);
+	
 
     useEffect(() => {
-        console.log(calculateSprintDates(targetDate))
-        const dynamicDateJql = `AND ( ((updatedDate >=${startDate}) AND updatedDate <=${targetDate}) OR (issueFunction in commented ( "after ${startDate} before ${targetDate}")) ) ORDER BY status ASC`
+        console.log("-----------Srinithi ----- " + JSON.stringify(calculateSprintDates(targetDate)))
+        const dynamicDateJql = `AND ( ((updatedDate >=${sprintPeriod.sprintStart}) AND updatedDate <=${sprintPeriod.sprintEnd}) OR (issueFunction in commented ( "after ${sprintPeriod.sprintStart} before ${sprintPeriod.sprintEnd}")) ) ORDER BY status ASC`
         const constructedJql = `${query} ${dynamicDateJql}`;
 
         if (!targetDate) {
@@ -83,12 +97,15 @@ OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedB
         try {
             const response = await axios.post('http://localhost:3001/api/jira-status', {
                 jqlQuery,
-                targetDate
+                //`${sprintPeriod.sprintEnd}`
+		targetDate:sprEndDate, 
+		startDate:sprStartDate
             });
             
             setStatuses(response.data);
             // console.log(response.data)
-            exportToExcel(response.data,targetDate,podName) 
+		
+            exportToExcel(response.data, sprStartDate , sprEndDate,podName) 
         } catch (err) {
             console.error('Error fetching Jira statuses:', err);
             setError(err.response?.data?.error || 'An unexpected error occurred.');
@@ -110,7 +127,7 @@ OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedB
                     />
                     <div className={"date-container"}>
                         <button onClick={() => {
-                            setTargetDate(calculateSprintEndDate(targetDate, "prev"))
+                            setTargetDate(calculateSprintEndDate(sprintPeriod.sprintEnd, "prev"))
                         }}> {'<< Prev Sprint End'}</button>
                         <input
                             type="date"
@@ -120,7 +137,7 @@ OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedB
                             style={{ padding: '8px', boxSizing: 'border-box' }}
                         />
                         <button onClick={() => {
-                            setTargetDate(calculateSprintEndDate(targetDate, "next"))
+                            setTargetDate(calculateSprintEndDate(sprintPeriod.sprintEnd, "next"))
                         }}>{'Next Sprint End >>'}</button>
 
                         <button onClick={handleSubmit} disabled={!targetDate || loading} style={{ backgroundColor: `${targetDate ? '#3498db' : '#e0e0e0'}` }}>
@@ -135,10 +152,11 @@ OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedB
                     )}
                 </div>
                 <div className='pod-container'>
-                    <button className='btn' onClick={() => { setQuery(jql['mm']);setPodName('Money_Matrix') }}>Money Matrix</button>
-                    <button className='btn' onClick={() => { setQuery(jql['pp']);setPodName('Power_Play') }}>Power Play</button>
-                    <button className='btn'>Orion</button>
-                    <button className='btn'> Placeholder</button>
+                    <button className='btn' onClick={() => { setQuery(jql['payments']);setPodName('Payments') }}>Payments</button>
+                    <button className='btn' onClick={() => { setQuery(jql['orion']);setPodName('Orion') }}>Orion</button>
+          	    <button className='btn' onClick={() => { setQuery(jql['moneymatrix']);setPodName('Money_Matrix') }}>Money Matrix</button>
+                    <button className='btn' onClick={() => { setQuery(jql['digitalpenny']);setPodName('Digital_Penny') }}>Digital Penny</button>
+           	    <button className='btn' onClick={() => { setQuery(jql['powerplay']);setPodName('Power_Play') }}>Power Play</button>
                 </div>
             </div>
        

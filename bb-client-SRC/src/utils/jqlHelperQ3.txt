@@ -9,9 +9,9 @@ OR ( issueFunction in commented("by sravanthi.vettigunta") OR issuekey in update
 OR ( issueFunction in commented("by g.chinniraviteja") OR issuekey in updatedBy(g.chinniraviteja) )
 OR ( issueFunction in commented("by praveer.nair") OR issuekey in updatedBy(praveer.nair) )
 OR ( issueFunction in commented("by srinithi.ilangovan") OR issuekey in updatedBy(srinithi.ilangovan) )
-OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedBy(vivekprabhakaran.j) ) )) ` ,
-
-    powerplay: `Project in (SCPA, PAYSYS, TMSPON) AND Type NOT in ("EPIC")
+OR ( issueFunction in commented("by vivekprabhakaran.j") OR issuekey in updatedBy(vivekprabhakaran.j) ) )) `,
+    
+	powerplay: `Project in (SCPA, PAYSYS, TMSPON) AND Type NOT in ("EPIC")
 AND ((assignee in (v.avva, shweta.padhy, harsha.kanthi, kishore.johnsan, Manisha.Kundena, karthick.p2, jaiprakash.madhavan)) 
 OR ( (issueFunction in commented("by v.avva") OR issuekey in updatedBy(v.avva) )
 OR ( issueFunction in commented("by shweta.padhy") OR issuekey in updatedBy(shweta.padhy) )
@@ -22,18 +22,15 @@ OR ( issueFunction in commented("by jaiprakash.madhavan") OR issuekey in updated
 OR ( issueFunction in commented("by karthick.p2") OR issuekey in updatedBy(karthick.p2) ) )) `,
 
     orion: `Project in (SCPA, PAYSYS, TMSPON) AND Type NOT in ("EPIC")
-AND ((assignee in (saranraj.balu, r.nagaimuthu, kanishka.das, Dhwanit.Kumar, shivam.patwal, swetha.busam, karthik.gunti)) 
+AND ((assignee in (saranraj.balu, sathish.kumarmohan, shilpa.kanojiya, namrata.chakraborty, chirag.chhabria, swetha.busam, karthik.gunti)) 
 OR ( (issueFunction in commented("by saranraj.balu") OR issuekey in updatedBy(saranraj.balu) )
-OR ( issueFunction in commented("by r.nagaimuthu") OR issuekey in updatedBy( r.nagaimuthu) )
-OR ( issueFunction in commented("by kanishka.das") OR issuekey in updatedBy(kanishka.das) )
-OR ( issueFunction in commented("by Dhwanit.Kumar") OR issuekey in updatedBy(Dhwanit.Kumar) )
-OR ( issueFunction in commented("by shivam.patwal") OR issuekey in updatedBy(shivam.patwal) )
+OR ( issueFunction in commented("by sathish.kumarmohan") OR issuekey in updatedBy( sathish.kumarmohan) )
+OR ( issueFunction in commented("by shilpa.kanojiya") OR issuekey in updatedBy(shilpa.kanojiya) )
+OR ( issueFunction in commented("by namrata.chakraborty") OR issuekey in updatedBy(namrata.chakraborty) )
+OR ( issueFunction in commented("by chirag.chhabria") OR issuekey in updatedBy(chirag.chhabria) )
 OR ( issueFunction in commented("by swetha.busam") OR issuekey in updatedBy(swetha.busam) )
 OR ( issueFunction in commented("by karthik.gunti") OR issuekey in updatedBy(karthik.gunti) ) )) `,
-
-    digitalpenny: ` `,
+	digitalpenny: ` `,
     payments: ``
-
 }
-
 
