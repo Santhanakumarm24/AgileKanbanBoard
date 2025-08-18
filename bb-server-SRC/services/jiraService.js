@@ -13,8 +13,28 @@ import axios from 'axios';
  * @returns {Promise<Array<Object>>} An array of issue objects, each containing detailed issue information.
  * @throws {Error} If there's an error interacting with the Jira API.
  */
-async function getIssueStatusAtDate(jiraUrl, personalAccessToken, jqlQuery, targetDateStr) {
-    const headers = {
+async function getIssueStatusAtDate(jiraUrl, personalAccessToken, jqlQuery, targetDateStr, startDateStr) {
+	const formatter = new Intl.DateTimeFormat('en-GB', {
+	    // timeStyle: "medium",
+	    dateStyle: "short",
+	});
+	
+	function formatDateWithHyphen(date) {
+		console.error(`formatDateWithHyphen input: ${date}`);
+		
+	    const dateArray = date.split('/');
+	    const month = dateArray[0];
+	    const day = dateArray[1];
+	    const year = dateArray[2];
+		
+		console.error(`formatDateWithHyphen output: ${year}-${month}-${day}`);
+	    return (`${year}-${month}-${day}`)
+		
+		
+	}
+	
+	
+	const headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${personalAccessToken}`
@@ -158,19 +178,29 @@ async function getIssueStatusAtDate(jiraUrl, personalAccessToken, jqlQuery, targ
             // --- Handle Story Points ---
             // Assuming customfield_10003 is Story Points. VERIFY THIS ID FOR YOUR JIRA.
             const storyPoints = issue.fields.customfield_10003 || 0;
-            const spFormatted = storyPoints ? `*${storyPoints}` : '0';
+            const spFormatted = storyPoints ? `${storyPoints}` : '#0';
 
-            // --- Handle CarryFwd and AdHoc ---
-            // These are based on labels in this example.
-            // **IMPORTANT: If these are custom fields, adjust the logic here accordingly.**
-            const labels = issue.fields.labels || [];
-            const carryFwdValue = labels.includes('CarryFwd') ? issueKey : 'No'; // Output issueKey if label exists, else 'No'
-            const adHocValue = labels.includes('AdHoc') ? issueKey : 'No'; // Output issueKey if label exists, else 'No'
+			const createdDate = issue.fields.created;
+			const updatedDate = issue.fields.updated;
 
-            // --- Use Jira's ISO date strings directly ---
-            const createdDate = issue.fields.created;
-            const updatedDate = issue.fields.updated;
+			
+			const labels = issue.fields.labels || [];
+			const carryFwdValue = labels.includes('CarryFwd') ? issueKey : 'No'; // Output issueKey if label exists, else 'No'
+	
 
+			  // Helper to convert DD/MM/YYYY to Date object
+			const parseDate = (dateStr) => {
+			    const [day, month, year] = dateStr.split("/");
+			    return new Date(`${year}-${month}-${day}`);
+			};
+
+			const startDate = parseDate(startDateStr);
+			const endDate = parseDate(targetDateStr);
+			const currentDate = new Date(createdDate);
+
+			const adHocValue = (currentDate >= startDate && currentDate <= endDate)? "AdHoc" : "No";
+
+			
             // Construct the desired object for this issue with all mapped fields
             const formattedIssue = {
                 "Key": issueKey,
@@ -178,7 +208,8 @@ async function getIssueStatusAtDate(jiraUrl, personalAccessToken, jqlQuery, targ
                 "Priority": issue.fields.priority?.name || 'None',
                 "Summary": issue.fields.summary,
                 "Status": statusAtTargetDate,
-                "Created": createdDate, // Now using Jira's ISO string
+				"Created": formatter.format(new Date(createdDate)),
+				"Updated": formatter.format(new Date(updatedDate)),
                 "Assignee": issue.fields.assignee?.displayName || 'Unassigned',
                 "Story Points": storyPoints,
                 "Epic Link": epicLink,

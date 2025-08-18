@@ -35,5 +35,3 @@ OR ( issueFunction in commented("by karthik.gunti") OR issuekey in updatedBy(kar
     payments: ``
 
 }
-
-

@@ -56,9 +56,14 @@ export const calculateSprintDates = (date, sprintPeriodDays = 14) => {
     // 5. Calculate Sprint End Date:
     // Start from the calculated sprintStartDate and add the sprint duration minus one day (inclusive).
     const sprintEndDate = new Date(sprintStartDate);
+
+
     sprintEndDate.setUTCDate(sprintEndDate.getUTCDate() + sprintPeriodDays - 1);
 
-    return { sprintStartDate, sprintEndDate };
+    	const sprintStart = sprintStartDate.toISOString().split('T')[0];
+	const sprintEnd = sprintEndDate.toISOString().split('T')[0];
+
+    return { sprintStart, sprintEnd };
 };
 
 

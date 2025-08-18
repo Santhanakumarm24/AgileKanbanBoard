@@ -8,7 +8,7 @@ const router = express.Router(); // Create an Express Router instance
 
 // Define the POST API endpoint for getting Jira statuses at a date
 router.post('/jira-status', async (req, res, next) => {
-    const { jqlQuery, targetDate } = req.body;
+    const { jqlQuery, targetDate, startDate } = req.body;
 
     // Basic request body validation
     if (!jqlQuery || !targetDate) {
@@ -21,12 +21,13 @@ router.post('/jira-status', async (req, res, next) => {
     }
 
     try {
-        console.log(`Received request: JQL=${jqlQuery}, Target Date=${targetDate}`);
+        console.log(`Received request: JQL=${jqlQuery}, StartDate = ${startDate}, Target Date=${targetDate} `);
         const statuses = await getIssueStatusAtDate(
             jiraConfig.JIRA_URL,
             jiraConfig.JIRA_PERSONAL_ACCESS_TOKEN,
             jqlQuery,
-            targetDate
+            targetDate, 
+			startDate
         );
         res.json(statuses); // Send the results back as JSON
     } catch (error) {
