@@ -1,6 +1,11 @@
 
 "homepage": "https://santhanakumarm24.github.io/BB-Kanban-Board/"
 
+"scripts": {
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d build"
+}
+
 {
   "name": "bb-sheet-manager",
   "private": true,
