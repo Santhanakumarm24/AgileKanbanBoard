@@ -11,12 +11,84 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// jira api
 app.use('/api', jiraRoutes);
 
-console.log('JIRA_BASE_URL:', process.env.JIRA_BASE_URL);
+// github login api
+// app.get('/github/login', (req, res) => {
+//   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=repo&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`;
+//   res.redirect(githubAuthUrl);
+// });
 
+
+
+app.get('/auth/github', (req, res) => {
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=repo&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`;
+  res.redirect(githubAuthUrl);
+});
+// github callback api
+
+app.get('/github/callback', async (req, res) => {
+  const code = req.query.code;
+
+  try {
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: code,
+      },
+      {
+        headers: {
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+  
+    await checkCollaboratorStatus(accessToken, req, res);
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    res.status(500).send('Authentication failed.');
+  }
+});
+
+
+const checkCollaboratorStatus = async (accessToken, req, res) => {
+  const owner = `${process.env.GITHUB_OWNER_NAME}`
+  const repo = `${process.env.GITHUB_REPO_NAME}`;
+
+  try {
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: {
+        Authorization: `token ${accessToken}`,
+      },
+    });
+
+    const username = userResponse.data.login;
+
+    await axios.get(`https://api.github.com/repos/${owner}/${repo}/collaborators/${username}`, {
+      headers: {
+        Authorization: `token ${accessToken}`,
+      },
+    });
+
+    res.redirect('/https://santhanakumarm24.github.io/AgileKanbanBoard');
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      res.status(403).send('Access Denied: You are not a collaborator on this repository.');
+    } else {
+      console.error('Error checking collaborator status:', error);
+      res.status(500).send('An error occurred.');
+    }
+  }
+};
+
+// gemini gen ai api
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 
 app.post("/api/ai-report", async (req, res) => {
     const { data, prompt } = req.body;
@@ -63,4 +135,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong on the server.' });
 });
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log("Server running on http://localhost:3001"));
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
